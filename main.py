@@ -149,7 +149,7 @@ while True:
                     password_input = password_input[:-1]
                 elif e.key == pygame.K_RETURN:
                     if password_input.strip() == password_correct:
-                        webbrowser.open("https://whooslizi.github.io/boopday//letter.html")
+                        webbrowser.open("https://nimble-speculoos-e55a66.netlify.app/")
                         pygame.quit()
                         sys.exit()
                     else:
