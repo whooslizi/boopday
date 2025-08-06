@@ -1,4 +1,4 @@
-import pygame, sys, random
+import pygame, sys, random, webbrowser
 
 pygame.init()
 W, H = 400, 600
@@ -33,6 +33,11 @@ pipe_timer = 0
 pipe_speed = 3
 score = 0
 game_over = False
+
+# Password input
+password_input = ""
+password_correct = "uet2025"
+password_error = False
 
 def draw_text(text, x, y, f=font, c=WHITE):
     t = f.render(text, True, c)
@@ -74,7 +79,7 @@ def flappy_logic():
         if p[0] + 50 == 60:
             score += 1
     if score >= 5:
-        phase = "wish"
+        phase = "show_password"
 
 def draw_quiz():
     q = quiz_data[quiz_index]
@@ -87,34 +92,19 @@ def draw_quiz():
 def draw_start():
     draw_text("dumb game", 40, 200)
     draw_text("Press ENTER to start", 70, 300)
-def draw_wish():
-    message = (
-        "🎂 Happy Birthday ong B! 🎂\n"
-        "Tuoi 18 vui ve, hanh phuc, chuc ong ban do NV1 (CN8 - UET) thanh cong!\n"
-        "Hy vong ong co that nhieu ki niem dep trong nhung nam thang DH sap toi.\n"
-        "Xin loi, toi 7.75 van chua biet chuc gi, nen doan sau la AI-generated =))).\n"
-        "Doi khi xa hoi bon chen, nhung chi can nho minh van la ban.\n"
-        "Cu the thoi, sinh nhat vui ve!\n"
-        "\nFrom your (far) friend,\n(Whoos)Lizi 🐧"
-    )
 
-    max_width = 460
-    y = 40
-    for line in message.split("\n"):
-        words = line.split()
-        current_line = ""
-        for word in words:
-            test_line = current_line + word + " "
-            text_width, _ = font.size(test_line)
-            if text_width > max_width:
-                draw_text(current_line.strip(), 20, y, font, BLACK)
-                y += 36
-                current_line = word + " "
-            else:
-                current_line = test_line
-        if current_line:
-            draw_text(current_line.strip(), 20, y, font, BLACK)
-            y += 36
+def draw_show_password():
+    draw_text("Congrats! You won", 40, 160)
+    draw_text("Password: uet2025", 70, 220, small_font)
+    draw_text("Press ENTER to continue", 60, 300, small_font)
+
+def draw_password_prompt():
+    global password_error
+    draw_text("Enter password to continue:", 20, 180)
+    pygame.draw.rect(screen, WHITE, (60, 230, 280, 40), 2)
+    draw_text(password_input, 70, 240, font, WHITE)
+    if password_error:
+        draw_text("❌ Wrong password", 90, 300, small_font, RED)
 
 while True:
     screen.fill(BLUE)
@@ -122,25 +112,25 @@ while True:
         if e.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+
         if phase == "start" and e.type == pygame.KEYDOWN:
             if e.key == pygame.K_RETURN:
                 phase = "quiz"
-        elif phase == "quiz":
-            if e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_DOWN:
-                    quiz_selected = (quiz_selected + 1) % 4
-                elif e.key == pygame.K_UP:
-                    quiz_selected = (quiz_selected - 1) % 4
-                elif e.key == pygame.K_RETURN:
-                    correct = quiz_data[quiz_index]["a"]
-                    if quiz_selected == correct:
-                        quiz_index += 1
-                        quiz_selected = 0
-                        if quiz_index >= len(quiz_data):
-                            reset_game()
-                            phase = "flappy"
-                    else:
-                        draw_text("Sai roi!", 150, 500)
+
+        elif phase == "quiz" and e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_DOWN:
+                quiz_selected = (quiz_selected + 1) % 4
+            elif e.key == pygame.K_UP:
+                quiz_selected = (quiz_selected - 1) % 4
+            elif e.key == pygame.K_RETURN:
+                correct = quiz_data[quiz_index]["a"]
+                if quiz_selected == correct:
+                    quiz_index += 1
+                    quiz_selected = 0
+                    if quiz_index >= len(quiz_data):
+                        reset_game()
+                        phase = "flappy"
+
         elif phase == "flappy":
             if e.type == pygame.KEYDOWN and not game_over:
                 if e.key == pygame.K_SPACE:
@@ -148,6 +138,26 @@ while True:
             if e.type == pygame.KEYDOWN and game_over:
                 if e.key == pygame.K_r:
                     reset_game()
+
+        elif phase == "show_password" and e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_RETURN:
+                phase = "enter_password"
+
+        elif phase == "enter_password":
+            if e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_BACKSPACE:
+                    password_input = password_input[:-1]
+                elif e.key == pygame.K_RETURN:
+                    if password_input.strip() == password_correct:
+                        webbrowser.open("https://whooslizi.github.io/boopday//letter.html")
+                        pygame.quit()
+                        sys.exit()
+                    else:
+                        password_error = True
+                        password_input = ""
+                elif e.unicode.isprintable():
+                    if len(password_input) < 20:
+                        password_input += e.unicode
 
     if phase == "start":
         draw_start()
@@ -160,8 +170,10 @@ while True:
         draw_text(f"Score: {score}", 10, 10)
         if game_over:
             draw_text("Game Over! Press R to restart", 40, H//2)
-    elif phase == "wish":
-        draw_wish()
+    elif phase == "show_password":
+        draw_show_password()
+    elif phase == "enter_password":
+        draw_password_prompt()
 
     pygame.display.flip()
     clock.tick(60)
